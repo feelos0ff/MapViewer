@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>Leaflet debug page</title>
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7/leaflet.css" />
+	<script src="http://cdn.leafletjs.com/leaflet-0.7/leaflet.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="/static/Leaflet_markercluster-master/example/screen.css" />
+
+	<link rel="stylesheet" href="/static/Leaflet_markercluster-master/dist/MarkerCluster.css" />
+	<link rel="stylesheet" href="/static/Leaflet_markercluster-master/dist/MarkerCluster.Default.css" />
+	<script src="/static/Leaflet_markercluster-master/dist/leaflet.markercluster-src.js"></script>
+	<script src="/static/leaflet-src.js"></script>
+	<script src="/static/L.GeoSearch-master/src/js/l.control.geosearch.js"></script>
+	<script src="/static/L.GeoSearch-master/src/js/l.geosearch.provider.openstreetmap.js"></script>
+	<link rel="stylesheet" href="/static/L.GeoSearch-master/src/css/l.geosearch.css" />
+	
+	<style>
+ 
+	#map {width: 1300px; height: 1000px; }
+ 
+	</style>
+</head>
+<body>
+	
+	<div id="map">	</div>
+
+	<script type="text/javascript">
+	////< все статики хедера переписать через урл_статик
+	
+	var table = new Object();
+	var collector = new Object();
+	
+	var flag = false;
+	
+	var oldSouthWest = { 'lat': 0.0, 'lng': 0.0 };
+	var oldNorthEast = { 'lat': 0.0, 'lng': 0.0 };
+	
+	function GarbageCollector(){
+		
+		var count = 0;
+		var n = 500;     ///< это значение передавать в шаблоне
+		for (var idx in collector){
+			
+			if(count >= n){
+				break;
+			}
+			count = count+1;
+			
+			markers.removeLayer(table[idx]);
+		
+			delete table[idx];
+			delete collector[idx];
+		}
+	}
+	
+	var tiles = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+		});
+		
+	latlng = L.latLng(50.4333, 30.5167);
+	
+//	document.getElementById('k1').value = '';	
+	
+	window.onload = function(){
+	    var map = document.getElementById('map');
+		var searchHead = document.getElementById('searchTag');
+
+		var w = window.innerWidth;
+	    var h = window.innerHeight ;
+
+	    map.style.width = w + "px";
+	    map.style.height = h + "px";
+	}
+	
+
+	var map = L.map('map', {center: latlng, zoom: 15, layers: [tiles]});
+
+	var markers = L.markerClusterGroup({ singleMarkerMode: true});
+	
+	function GetRequestPoints(){
+		if(map.getZoom() < 8){
+			return false;
+		}
+		var bounds = map.getBounds();
+		
+		var urls = "http://127.0.0.1:8000/points/" + bounds.getSouthWest()['lat'] + ','
+												   + oldSouthWest['lat'] + '/'
+												   + bounds.getSouthWest()['lng'] + ','
+												   + oldSouthWest['lng'] + '/'
+												   + bounds.getNorthEast()['lat'] + ','
+												   + oldNorthEast['lat'] + '/'
+												   + bounds.getNorthEast()['lng'] + ','
+												   + oldNorthEast['lng'] + '/';
+		var requests = new XMLHttpRequest();
+		requests.open("GET", urls, false);
+		requests.send( 'unknown' );
+		
+		// Если прием запроса завершился
+		if (requests.status != 200)
+			return false;
+	
+		oldSouthWest = bounds.getSouthWest();
+		oldNorthEast = bounds.getNorthEast();
+		eval('var values = ' +  requests.responseText);
+		
+		for (var i = 0; i < values[1].length; i++){
+			var idx = values[1][i][2];
+	
+			if(idx in table)
+				collector[idx] = true; 
+		}
+		for (var i = 0; i < values[0].length; i++){
+			var idx = values[0][i][2];
+			var tmp = new  L.marker(new L.LatLng(values[0][i][0], values[0][i][1])).bindPopup("<strong>" + values[0][i][2] +  "</strong><br />").openPopup();
+
+			if(idx in collector)
+				delete collector[idx];
+			else if(idx in table)
+				continue;				
+			else{
+				markers.addLayer(tmp);
+				table[idx] = tmp;
+			}
+		}
+		return false;
+	}
+	
+	////< урл передавать через шаблон
+
+	function populate(e) {
+		for (var i = 0; i < addressPoints.length; i++) {
+			var a = addressPoints[i];
+			var m = L.marker(new L.LatLng(a[0], a[1]));
+			markers.addLayer(m);
+		}
+		markers.addLayer(L.marker (new L.LatLng(50.4333, 30.5167)));
+		return false;
+	}
+	
+
+	markers.on('clusterclick', function (a) {
+		a.layer.zoomToBounds();
+	});
+
+	tiles.on('load',function(e){
+		GetRequestPoints();	
+	//	
+	});
+	map.addLayer(markers);
+
+
+    new L.Control.GeoSearch({
+        provider: new L.GeoSearch.Provider.OpenStreetMap()
+    }).addTo(map);
+    function foo(){
+    	alert("hello");
+    }
+   // setInterval(foo, 5000);
+    setInterval(  GarbageCollector , 7500)
+	</script>
+</body>
+</html>
