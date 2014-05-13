@@ -37,9 +37,9 @@ def GetPoints(request, nordEastLat, nordEastLon, southWestLat, southWestLon):
     if len(obj[0]) > maxCount or len(obj[0]) > maxCount:
         obj = [[],[]]
 
+  
     # ищем точки, не входящие в новый список
-
-    withoutRep = set(obj[0])
+    withoutRep = set(obj[0])    
     replaceLst = set(obj[1])
     
     for i in obj[1]:
