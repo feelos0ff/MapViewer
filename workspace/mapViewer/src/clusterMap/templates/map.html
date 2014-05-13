@@ -23,12 +23,54 @@
 	</style>
 </head>
 <body>
-	
+
+	<button id="Add">Добавить</button>
+	<button id="Update">Удалить</button>
+	<button id="Delete">Изменить</button>
+	ip диапазон <input type=text id=ip></input> 
+	Широта <input type=text id=lat></input>
+	Долгота <input type=text id=lon></input>
 	<div id="map">	</div>
 
 	<script type="text/javascript">
 	////< все статики хедера переписать через урл_статик
+	var updater = document.getElementById('Update');	
+	var adder = document.getElementById('Add');	
+	var deleter = document.getElementById('Delete');
+
+	function changeReq (urls){
+		//document.getElementById('ip').value = 'gjh';
+		
+		var ip = document.getElementById('ip').value;
+		var lat = document.getElementById('lat').value;
+		var lon = document.getElementById('lon').value;	
+		
+		var requests = new XMLHttpRequest();
+		urls += ip+ '/' + lat + '/' + lon + '/';
+		alert(urls)
+		requests.open("GET", urls, false);
+		requests.send( 'unknown' );
+		
+		// Если прием запроса завершился
+		if (requests.status != 200)
+			alert("requestError");
+		else
+			alert(requests.responseText);
+	}
 	
+	adder.onmousedown=function(){ 
+		var url = "http://127.0.0.1:8000/add/";
+		changeReq(url);
+	}
+
+	updater.onmousedown=function(){ 
+		var url = "http://127.0.0.1:8000/update/"// + ip + '/' + lat '/' + lon + '/';
+		changeReq(url);
+	}
+	deleter.onmousedown=function(){
+		var url = "http://127.0.0.1:8000/delete/" //+ ip + '/';
+		changeReq(url);
+	}
 	var table = new Object();
 	var collector = new Object();
 	
@@ -61,8 +103,6 @@
 		});
 		
 	latlng = L.latLng(50.4333, 30.5167);
-	
-//	document.getElementById('k1').value = '';	
 	
 	window.onload = function(){
 	    var map = document.getElementById('map');
@@ -97,7 +137,6 @@
 		var requests = new XMLHttpRequest();
 		requests.open("GET", urls, false);
 		requests.send( 'unknown' );
-		
 		// Если прием запроса завершился
 		if (requests.status != 200)
 			return false;
@@ -155,10 +194,7 @@
     new L.Control.GeoSearch({
         provider: new L.GeoSearch.Provider.OpenStreetMap()
     }).addTo(map);
-    function foo(){
-    	alert("hello");
-    }
-   // setInterval(foo, 5000);
+
     setInterval(  GarbageCollector , 7500)
 	</script>
 </body>

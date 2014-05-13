@@ -25,4 +25,6 @@ class Geoip(models.Model):
     class Meta:
         managed = False
         db_table = 'geoip'
+
+
     

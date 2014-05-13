@@ -13,7 +13,6 @@ def GetStatic(request, direction):
     return HttpResponse('Leaflet_markercluster-master/' + direction)
 
 def GetPoints(request, nordEastLat, nordEastLon, southWestLat, southWestLon):
-    print (nordEastLat, nordEastLon)
     # ОПТИМИЗИРОВАТЬ!
     nordEastLat = eval('[' + nordEastLat + ']')
     nordEastLon = eval('[' + nordEastLon + ']')
@@ -23,7 +22,9 @@ def GetPoints(request, nordEastLat, nordEastLon, southWestLat, southWestLon):
     
     southWest = [nordEastLat, nordEastLon] 
     northEast = [southWestLat, southWestLon]
-    print (southWest, northEast)
+    
+    maxCount = 30000
+    clusterCount = 5000
     # 0й список - новые точки, 1й старые
     obj = [{},{}]
     for i in range(2):
@@ -33,12 +34,10 @@ def GetPoints(request, nordEastLat, nordEastLon, southWestLat, southWestLon):
         else:
             obj[i] = {}
             
-    if len(obj[0]) > 50000 or len(obj[0]) > 50000:
+    if len(obj[0]) > maxCount or len(obj[0]) > maxCount:
         obj = [[],[]]
 
     # ищем точки, не входящие в новый список
-
-
 
     withoutRep = set(obj[0])
     replaceLst = set(obj[1])
@@ -47,16 +46,14 @@ def GetPoints(request, nordEastLat, nordEastLon, southWestLat, southWestLon):
         if i in obj[0]:
             withoutRep.remove(i)
             replaceLst.remove(i)
-
+            
     obj[1] = replaceLst
     
-    if len(obj[0]) > 5000:
-        obj[0] = GetCluster(list( withoutRep), 5000)
+    if len(obj[0]) > clusterCount:
+        obj[0] = GetCluster(list( withoutRep), clusterCount)
 
-
-    
     l = [[],[]]
-    
+
     for i in range(2):
         for j in obj[i]:
             l[i].append(j.to_Json())
@@ -78,20 +75,19 @@ def GetCluster(points, num):
 
     return res
 
-def GetObject(request):
-    ip_obj = request.POST['ip']
-    return HttpResponse( Geoip.objects.get(ip=ip_obj) )
 
-
-def AddObject(request):
+def AddObject(request, ip, lat, lon):
+    #написать здесь
     return HttpResponse()
 
 
-def DelObject(request):
+def DelObject(request, ip):
+    # написать здесь
     return HttpResponse()
 
 
-def UpdateObject(request):
+def UpdateObject(request,ip, lat, lon):
+    # написать здесь
     return HttpResponse()
 
 
