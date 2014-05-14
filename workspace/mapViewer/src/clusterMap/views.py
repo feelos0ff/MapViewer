@@ -3,7 +3,10 @@ from django.shortcuts import render_to_response
 from django.http.response import HttpResponse
 import json
 import collections
+from django.db import models
 from clusterMap.models import Geoip
+from django.forms.fields import GenericIPAddressField, IPAddressField
+from django.forms.widgets import TextInput
 # Create your views here.
 
 def GetMap(request): 
@@ -19,7 +22,7 @@ def GetPoints(request, nordEastLat, nordEastLon, southWestLat, southWestLon):
     
     southWestLat = eval('[' + southWestLat +']')
     southWestLon = eval('[' + southWestLon + ']')
-    
+  #  print type(southWestLat[0])
     southWest = [nordEastLat, nordEastLon] 
     northEast = [southWestLat, southWestLon]
     
@@ -76,19 +79,29 @@ def GetCluster(points, num):
     return res
 
 
-def AddObject(request, ip, lat, lon):
+def AddObject(request, IP, Lat, Lon):
+    print (IP,Lat,Lon)
+    Geoip(ip=str(IP), lat=float(Lat), lon = float(Lon)).save()
     #написать здесь
     return HttpResponse()
 
 
-def DelObject(request, ip):
-    # написать здесь
-    return HttpResponse()
+def DelObject(request, IP):
+    
+    obj = Geoip.objects.get(ip= str(IP))
+    res = obj.to_Json()
+    obj.delete()
+    return HttpResponse(json.dumps( ['',res] ))
 
 
-def UpdateObject(request,ip, lat, lon):
-    # написать здесь
-    return HttpResponse()
+def UpdateObject(request, IP, Lat, Lon):
+    print (IP, Lat, Lon)
+    obj = Geoip.objects.filter(ip=str(IP))
+    obj.update(lat=float(Lat), lon=float(Lon))
+    res = obj[0].to_Json()
+    print res
+  #  return HttpResponse()
+    return HttpResponse(json.dumps( [res, res] ))
 
 
 def GetHistory(request):

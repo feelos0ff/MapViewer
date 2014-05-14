@@ -25,8 +25,8 @@
 <body>
 
 	<button id="Add">Добавить</button>
-	<button id="Update">Удалить</button>
-	<button id="Delete">Изменить</button>
+	<button id="Update">Изменить</button>
+	<button id="Delete">Удалить</button>
 	ip диапазон <input type=text id=ip></input> 
 	Широта <input type=text id=lat></input>
 	Долгота <input type=text id=lon></input>
@@ -38,39 +38,7 @@
 	var adder = document.getElementById('Add');	
 	var deleter = document.getElementById('Delete');
 
-	function changeReq (urls){
-		//document.getElementById('ip').value = 'gjh';
-		
-		var ip = document.getElementById('ip').value;
-		var lat = document.getElementById('lat').value;
-		var lon = document.getElementById('lon').value;	
-		
-		var requests = new XMLHttpRequest();
-		urls += ip+ '/' + lat + '/' + lon + '/';
-		alert(urls)
-		requests.open("GET", urls, false);
-		requests.send( 'unknown' );
-		
-		// Если прием запроса завершился
-		if (requests.status != 200)
-			alert("requestError");
-		else
-			alert(requests.responseText);
-	}
 	
-	adder.onmousedown=function(){ 
-		var url = "http://127.0.0.1:8000/add/";
-		changeReq(url);
-	}
-
-	updater.onmousedown=function(){ 
-		var url = "http://127.0.0.1:8000/update/"// + ip + '/' + lat '/' + lon + '/';
-		changeReq(url);
-	}
-	deleter.onmousedown=function(){
-		var url = "http://127.0.0.1:8000/delete/" //+ ip + '/';
-		changeReq(url);
-	}
 	var table = new Object();
 	var collector = new Object();
 	
@@ -115,10 +83,65 @@
 	    map.style.height = h + "px";
 	}
 	
-
 	var map = L.map('map', {center: latlng, zoom: 15, layers: [tiles]});
 
 	var markers = L.markerClusterGroup({ singleMarkerMode: true});
+	
+function changeReq (urls){
+		
+		var ip = document.getElementById('ip').value;
+		var lat = document.getElementById('lat').value;
+		var lon = document.getElementById('lon').value;	
+		
+		var requests = new XMLHttpRequest();
+		urls += ip+ '/' + lat + '/' + lon + '/';
+		//alert(urls)
+		requests.open("GET", urls, false);
+		requests.send( 'unknown' );
+		
+		// Если прием запроса завершился
+		if (requests.status != 200){
+			alert("requestError");
+			return true;
+		}
+		
+		if(!requests.responseText){
+		//	alert("add")
+			return true;
+		}
+		eval('var values = ' +  requests.responseText);
+		var idx = values[1][2];
+		//alert(requests.responseText)		
+		if(idx in table){
+			markers.removeLayer(table[idx]);
+			delete table[idx];
+			
+			if(idx in collector)
+				delete collector[idx];
+		}
+		if(values[0]){
+			var idx = values[0][2];
+			var tmp = new  L.marker(new L.LatLng(values[0][0], values[0][1])).bindPopup("<strong>" + values[0][2] +  "</strong><br />").openPopup();
+			
+			markers.addLayer(tmp);
+			table[idx] = tmp;
+			
+		}
+	}
+	
+	adder.onmousedown=function(){ 
+		var url = "http://127.0.0.1:8000/add/";
+		changeReq(url);
+	}
+
+	updater.onmousedown=function(){ 
+		var url = "http://127.0.0.1:8000/update/"// + ip + '/' + lat '/' + lon + '/';
+		changeReq(url);
+	}
+	deleter.onmousedown=function(){
+		var url = "http://127.0.0.1:8000/delete/" //+ ip + '/';
+		changeReq(url);
+	}
 	
 	function GetRequestPoints(){
 		if(map.getZoom() < 8){
@@ -144,7 +167,7 @@
 		oldSouthWest = bounds.getSouthWest();
 		oldNorthEast = bounds.getNorthEast();
 		eval('var values = ' +  requests.responseText);
-		
+	
 		for (var i = 0; i < values[1].length; i++){
 			var idx = values[1][i][2];
 	
